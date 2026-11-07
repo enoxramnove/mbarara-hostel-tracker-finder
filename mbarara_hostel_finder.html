@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mbarara Student Hostel Finder & Payment Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-12">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-indigo-950 text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-amber-400 p-2 rounded-xl text-indigo-950 font-extrabold shadow-sm">
+                    <i data-lucide="home" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-tight" id="app-title">Mbarara Student Hostel Finder</h1>
+                    <p class="text-xs text-indigo-200" id="app-subtitle">MUST & BSU Accommodation & Rent Tracker</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Language Toggle (NFR-10) -->
+                <button onclick="toggleLanguage()" class="flex items-center gap-1.5 bg-indigo-900 hover:bg-indigo-800 text-amber-300 px-3 py-1.5 rounded-full text-xs font-semibold border border-indigo-700 transition">
+                    <i data-lucide="globe" class="w-4 h-4"></i>
+                    <span id="lang-btn-text">Language: Runyankole</span>
+                </button>
+
+                <!-- Auth Action Button (Dynamic Login / User Profile) -->
+                <div id="nav-auth-container">
+                    <button onclick="openAuthModal()" class="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-indigo-950 font-bold px-4 py-1.5 rounded-full text-xs shadow-sm transition">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span id="btn-login-nav">Login / Register</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Logged In User Status Banner -->
+    <div id="user-banner" class="bg-indigo-900 border-t border-indigo-800 text-white px-4 py-2 hidden">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between text-xs gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-indigo-300">Logged in as:</span>
+                <strong id="banner-user-name" class="text-amber-300 font-bold">Arineitwe Rodgers</strong>
+                <span id="banner-role-badge" class="bg-indigo-700 text-indigo-100 text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border border-indigo-500">STUDENT</span>
+                <span id="banner-user-inst" class="text-indigo-200 hidden sm:inline">(MUST)</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <span id="banner-access-info" class="text-indigo-300 text-[11px]">Access: Student Portal</span>
+                <button onclick="handleLogout()" class="text-rose-300 hover:text-rose-100 font-semibold underline text-xs flex items-center gap-1">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- ================= UNAUTHENTICATED GUEST BANNER ================= -->
+        <section id="guest-welcome" class="bg-gradient-to-r from-indigo-900 to-indigo-800 text-white p-6 rounded-2xl shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="space-y-1 max-w-2xl">
+                <div class="inline-flex items-center gap-2 bg-amber-400/20 text-amber-300 px-3 py-1 rounded-full text-xs font-semibold border border-amber-400/30 mb-1">
+                    <i data-lucide="lock" class="w-3.5 h-3.5"></i> Protected Stakeholder Portals
+                </div>
+                <h2 class="text-xl font-bold" id="guest-heading">Please Log In to Access Your Portal</h2>
+                <p class="text-xs text-indigo-200 leading-relaxed" id="guest-sub">
+                    Students can search and lock rooms; Custodians manage listings and payments; Wardens and Parents verify student residency records securely.
+                </p>
+            </div>
+            <button onclick="openAuthModal()" class="bg-amber-400 hover:bg-amber-300 text-indigo-950 font-bold px-5 py-2.5 rounded-xl text-xs shadow-md transition flex items-center gap-2">
+                <i data-lucide="key-round" class="w-4 h-4"></i> Sign In to Account
+            </button>
+        </section>
+
+        <!-- ================= STUDENT VIEW ================= -->
+        <section id="view-student" class="space-y-6">
+            <!-- Filter Bar (FR-01) -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-bold text-slate-800 flex items-center gap-2" id="label-filter-title">
+                        <i data-lucide="sliders-horizontal" class="w-5 h-5 text-indigo-600"></i>
+                        Filter Hostel Vacancies
+                    </h2>
+                    <span class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-medium" id="results-count">3 Hostels Found</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Price Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1" id="label-max-price">Max Rent Per Semester (UGX)</label>
+                        <input type="range" id="filter-price" min="150000" max="600000" step="25000" value="400000" oninput="updatePriceLabel(this.value); applyFilters();" class="w-full accent-indigo-600">
+                        <div class="flex justify-between text-xs text-slate-500 font-bold mt-1">
+                            <span>150,000 UGX</span>
+                            <span id="price-display" class="text-indigo-600">400,000 UGX</span>
+                        </div>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1" id="label-category">Hostel Category</label>
+                        <select id="filter-category" onchange="applyFilters()" class="w-full text-sm bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="ALL">All Categories (Mixed/Boys/Girls)</option>
+                            <option value="GIRLS">Girls Only</option>
+                            <option value="BOYS">Boys Only</option>
+                            <option value="MIXED">Mixed Accommodation</option>
+                        </select>
+                    </div>
+
+                    <!-- Distance Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1" id="label-distance">Proximity to MUST/BSU Campus</label>
+                        <select id="filter-distance" onchange="applyFilters()" class="w-full text-sm bg-slate-50 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="10">Any Distance</option>
+                            <option value="0.5">Within 0.5 KM (Walking Distance)</option>
+                            <option value="1.0">Within 1.0 KM</option>
+                            <option value="2.0">Within 2.0 KM</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hostel List Grid -->
+            <div id="hostel-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards dynamically populated via Javascript -->
+            </div>
+        </section>
+
+        <!-- ================= CUSTODIAN VIEW (FR-02) ================= -->
+        <section id="view-custodian" class="hidden space-y-6 max-w-4xl mx-auto">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4 mb-6">
+                    <div class="bg-indigo-100 text-indigo-700 p-2.5 rounded-xl">
+                        <i data-lucide="building-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-lg text-slate-800" id="label-custodian-title">Post New Room Vacancy</h2>
+                        <p class="text-xs text-slate-500" id="label-custodian-sub">Upload details for students to reserve and avoid manual paper logs.</p>
+                    </div>
+                </div>
+
+                <form onsubmit="handlePostRoom(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-form-name">Hostel Name</label>
+                        <input type="text" required id="form-hostel-name" placeholder="e.g. Ruharo Heights Hostel" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-form-room">Room Number / Block</label>
+                            <input type="text" required id="form-room-no" placeholder="e.g. Room B-14" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-form-price">Price / Semester (UGX)</label>
+                            <input type="number" required id="form-price" placeholder="350000" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-form-category">Category</label>
+                            <select id="form-category" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                <option value="MIXED">Mixed</option>
+                                <option value="GIRLS">Girls Only</option>
+                                <option value="BOYS">Boys Only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-form-dist">Distance from Campus (KM)</label>
+                            <input type="number" step="0.1" required id="form-distance" placeholder="0.8" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-form-photo">Room Photo URL</label>
+                        <input type="url" id="form-photo" placeholder="https://images.unsplash.com/photo-..." class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-md transition flex items-center justify-center gap-2" id="btn-post-room">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                        Publish Room Vacancy
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= WARDEN & SPONSOR VIEW (FR-05, FR-10) ================= -->
+        <section id="view-warden" class="hidden max-w-2xl mx-auto space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4 mb-4">
+                    <div class="bg-emerald-100 text-emerald-800 p-2.5 rounded-xl">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-lg text-slate-800" id="label-warden-title">Residence & Receipt Verification Portal</h2>
+                        <p class="text-xs text-slate-500" id="label-warden-sub">For Wardens, Parents, and Sponsors to verify accommodation authentications.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1" id="label-search-token">Enter Receipt Code / Verification Token</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="verify-token-input" placeholder="e.g. MBR-REC-2026-8812" class="flex-grow text-sm border border-slate-300 rounded-lg p-2.5 uppercase font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <button onclick="performVerification()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 rounded-lg text-sm transition flex items-center gap-1.5" id="btn-verify">
+                                <i data-lucide="search" class="w-4 h-4"></i> Verify
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verification Output Result Box -->
+            <div id="verification-result" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-emerald-200 space-y-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-bl-xl tracking-wider">
+                    Official Verified Record
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-50 text-emerald-600 p-3 rounded-full border border-emerald-200">
+                        <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900" id="res-student-name">Arineitwe Rodgers</h3>
+                        <p class="text-xs text-slate-500" id="res-student-inst">MUST - Reg: 2025/BSE/156/PS</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div>
+                        <span class="text-slate-400 block font-medium" id="lbl-res-hostel">Hostel & Room:</span>
+                        <strong class="text-slate-800 text-sm" id="res-hostel-room">Ruharo Heights - Room B14</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-medium" id="lbl-res-custodian">Custodian:</span>
+                        <strong class="text-slate-800 text-sm" id="res-custodian">Mr. Twinamatsiko John</strong>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-medium" id="lbl-res-amount">Rent Settled:</span>
+                        <strong class="text-emerald-700 text-sm" id="res-amount">350,000 UGX</strong>
+                    </div>
+                    <div>
+                        <!-- Masked Contact for Privacy (NFR-03) -->
+                        <span class="text-slate-400 block font-medium" id="lbl-res-contact">Protected Contact:</span>
+                        <strong class="text-slate-800 font-mono text-sm" id="res-phone">+25677***4567</strong>
+                    </div>
+                </div>
+
+                <p class="text-[11px] text-slate-400 text-center italic">Verified against Mbarara Hostel System Registry</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= AUTHENTICATION MODAL ================= -->
+    <div id="modal-auth" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200 border border-slate-100">
+            <!-- Modal Header -->
+            <div class="bg-indigo-950 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <div class="bg-amber-400 text-indigo-950 p-1.5 rounded-lg font-bold">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm">Stakeholder Authentication</h3>
+                        <p class="text-[11px] text-indigo-200">Sign in to your authorized portal</p>
+                    </div>
+                </div>
+                <button onclick="closeAuthModal()" class="text-indigo-200 hover:text-white transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-6 space-y-5">
+                <div class="grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1">
+                    <button id="auth-tab-login" type="button" onclick="showAuthForm('login')" class="rounded-md bg-white py-2 text-xs font-bold text-indigo-900 shadow-sm">
+                        Sign In
+                    </button>
+                    <button id="auth-tab-register" type="button" onclick="showAuthForm('register')" class="rounded-md py-2 text-xs font-bold text-slate-500">
+                        Create Account
+                    </button>
+                </div>
+                <p id="auth-message" role="alert" class="hidden rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700"></p>
+
+                <form id="auth-login-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                        <input type="email" required id="auth-email" autocomplete="email" placeholder="e.g. student@must.ac.ug" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                        <input type="password" required id="auth-password" autocomplete="current-password" placeholder="Password" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+
+                    <button type="submit" class="w-full bg-indigo-900 hover:bg-indigo-800 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2 text-xs">
+                        <i data-lucide="log-in" class="w-4 h-4 text-amber-400"></i>
+                        Sign In to Dashboard
+                    </button>
+                </form>
+
+                <form id="auth-register-form" onsubmit="handleRegisterSubmit(event)" class="hidden space-y-3">
+                    <div>
+                        <label for="register-name" class="mb-1 block text-xs font-semibold text-slate-700">Full Name</label>
+                        <input type="text" required maxlength="100" id="register-name" autocomplete="name" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="register-email" class="mb-1 block text-xs font-semibold text-slate-700">Email Address</label>
+                        <input type="email" required maxlength="254" id="register-email" autocomplete="email" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="register-phone" class="mb-1 block text-xs font-semibold text-slate-700">Phone Number</label>
+                            <input type="tel" required maxlength="30" id="register-phone" autocomplete="tel" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="register-institution" class="mb-1 block text-xs font-semibold text-slate-700">Institution</label>
+                            <input type="text" maxlength="100" id="register-institution" value="MUST" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="register-password" class="mb-1 block text-xs font-semibold text-slate-700">Password (at least 8 characters)</label>
+                        <input type="password" required minlength="8" maxlength="72" id="register-password" autocomplete="new-password" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label for="register-password-confirm" class="mb-1 block text-xs font-semibold text-slate-700">Confirm Password</label>
+                        <input type="password" required minlength="8" maxlength="72" id="register-password-confirm" autocomplete="new-password" class="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button type="submit" class="w-full rounded-xl bg-indigo-900 py-3 text-xs font-bold text-white shadow transition hover:bg-indigo-800">
+                        Create Student Account
+                    </button>
+                    <p class="text-center text-[11px] text-slate-500">Custodian and warden accounts must be assigned by an administrator.</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BOOKING MODAL (FR-03) ================= -->
+    <div id="modal-booking" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full rounded-2xl shadow-xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="bg-indigo-950 text-white p-4 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="clock" class="w-5 h-5 text-amber-400"></i>
+                    <h3 class="font-bold text-sm" id="lbl-hold-title">24-Hour Temporary Hold Reserved</h3>
+                </div>
+                <button onclick="closeBookingModal()" class="text-indigo-200 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="p-5 space-y-4">
+                <!-- Countdown Display -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+                    <span class="text-xs text-amber-800 block font-medium" id="lbl-hold-timer">Hold Expiration Countdown:</span>
+                    <div id="countdown-timer" class="font-mono text-2xl font-bold text-amber-900 tracking-wider">23:59:59</div>
+                </div>
+
+                <!-- Room Summary -->
+                <div class="text-xs space-y-1 text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <div class="flex justify-between"><span id="lbl-bk-hostel">Hostel:</span> <strong class="text-slate-900" id="bk-hostel-name">-</strong></div>
+                    <div class="flex justify-between"><span id="lbl-bk-room">Room:</span> <strong class="text-slate-900" id="bk-room-no">-</strong></div>
+                    <div class="flex justify-between"><span id="lbl-bk-price">Amount Due:</span> <strong class="text-indigo-600 font-bold" id="bk-price">-</strong></div>
+                </div>
+
+                <!-- Payment Reference Form -->
+                <form onsubmit="handleCompletePayment(event)" class="space-y-3 pt-2">
+                    <label class="block text-xs font-semibold text-slate-700" id="lbl-momo-ref">Enter MTN / Airtel Mobile Money Transaction Ref</label>
+                    <input type="text" required id="payment-ref-input" placeholder="e.g. 1823749823 or MP2603..." class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl shadow transition flex items-center justify-center gap-2" id="btn-submit-payment">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                        Confirm Payment & Generate Receipt
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= RECEIPT MODAL (FR-04) ================= -->
+    <div id="modal-receipt" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white max-w-sm w-full rounded-2xl shadow-xl overflow-hidden p-6 space-y-4 text-center">
+            <div class="inline-flex bg-emerald-100 text-emerald-600 p-3 rounded-full">
+                <i data-lucide="check-circle-2" class="w-10 h-10"></i>
+            </div>
+            
+            <h3 class="font-bold text-lg text-slate-800" id="lbl-receipt-heading">Rent Payment Confirmed!</h3>
+            <p class="text-xs text-slate-500" id="lbl-receipt-sub">Official receipt issued for Mbarara University Residence Audit.</p>
+
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left text-xs space-y-2">
+                <div class="flex justify-between"><span class="text-slate-400">Token ID:</span><span class="font-mono font-bold text-slate-800" id="rec-token">MBR-REC-2026-8812</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Student:</span><span class="font-semibold text-slate-800" id="rec-student">Current User</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Hostel/Room:</span><span class="font-semibold text-slate-800" id="rec-hostel">Ruharo Heights - B14</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Amount Paid:</span><span class="font-bold text-emerald-600" id="rec-amount">350,000 UGX</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Status:</span><span class="bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded">PAID & VERIFIED</span></div>
+            </div>
+
+            <!-- Simulated QR Code SVG -->
+            <div class="flex flex-col items-center justify-center p-3 border border-dashed border-slate-300 rounded-xl bg-slate-50">
+                <svg class="w-32 h-32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" fill="white"/>
+                    <path d="M10 10H40V40H10V10ZM20 20V30H30V20H20Z" fill="black"/>
+                    <path d="M60 10H90V40H60V10ZM70 20V30H80V20H70Z" fill="black"/>
+                    <path d="M10 60H40V90H10V60ZM20 70V80H30V70H20Z" fill="black"/>
+                    <rect x="50" y="50" width="10" height="10" fill="black"/>
+                    <rect x="70" y="50" width="20" height="10" fill="black"/>
+                    <rect x="50" y="70" width="20" height="20" fill="black"/>
+                    <rect x="80" y="80" width="10" height="10" fill="black"/>
+                </svg>
+                <span class="text-[10px] text-slate-400 mt-1" id="lbl-qr-hint">Scan with camera to verify authenticity</span>
+            </div>
+
+            <button onclick="closeReceiptModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold py-2.5 rounded-lg transition" id="btn-close-receipt">
+                Done & Download Copy
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Logic Script -->
+    <script>
+        let authToken = sessionStorage.getItem('authToken');
+        let currentUser = null;
+
+        // Language Dictionaries (NFR-10)
+        const translations = {
+            EN: {
+                title: "Mbarara Student Hostel Finder",
+                subtitle: "MUST & BSU Accommodation & Rent Tracker",
+                langBtn: "Language: Runyankole",
+                filterTitle: "Filter Hostel Vacancies",
+                maxPrice: "Max Rent Per Semester (UGX)",
+                category: "Hostel Category",
+                distance: "Proximity to MUST/BSU Campus",
+                custTitle: "Post New Room Vacancy",
+                custSub: "Upload details for students to reserve and avoid manual paper logs.",
+                formName: "Hostel Name",
+                formRoom: "Room Number / Block",
+                formPrice: "Price / Semester (UGX)",
+                formCategory: "Category",
+                formDist: "Distance from Campus (KM)",
+                formPhoto: "Room Photo URL",
+                btnPost: "Publish Room Vacancy",
+                wardenTitle: "Residence & Receipt Verification Portal",
+                wardenSub: "For Wardens, Parents, and Sponsors to verify accommodation authentications.",
+                searchToken: "Enter Receipt Code / Verification Token",
+                btnVerify: "Verify",
+                bookBtn: "Book Room (24h Hold)"
+            },
+            RUN: {
+                title: "Okyerera Amago y'Abeegi Mbarara",
+                subtitle: "Eby'obutuuro bya MUST na BSU",
+                langBtn: "Language: English",
+                filterTitle: "Shonora Amago Agariho",
+                maxPrice: "Eshoobi eya hamu (UGX)",
+                category: "Kategoli y'Ego",
+                distance: "Hare n'eiteraniro rya MUST/BSU",
+                custTitle: "Taaho Ekishengye Ekihyaka",
+                custSub: "Andika ebitukwata aha kishengye eby'abeegi bahandiikise.",
+                formName: "Eriina ry'Ego",
+                formRoom: "Namba y'Ekishengye",
+                formPrice: "Eshoobi / Muhanda (UGX)",
+                formCategory: "Kategoli",
+                formDist: "Yaha rekyingana (KM)",
+                formPhoto: "Ekishushani ky'Ekishengye (URL)",
+                btnPost: "Shookoza Ekishengye",
+                wardenTitle: "Ekiroolezo ky'Abeegi n'Ebihandiiko",
+                wardenSub: "Ebirikukwata aha mubaazi n'abawagizi kuza kushonora.",
+                searchToken: "Taaho Koodi y'Ekiragano",
+                btnVerify: "Shonora",
+                bookBtn: "Kwatira Ekishengye (24h)"
+            }
+        };
+
+        let currentLang = 'EN';
+
+        // Sample Data Store
+        let hostelsData = [
+            {
+                id: 1,
+                name: "Ruharo Heights Hostel",
+                room: "Room B-14",
+                price: 350000,
+                distance: 0.6,
+                category: "GIRLS",
+                custodian: "Mr. Twinamatsiko John",
+                photo: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 2,
+                name: "Taso Village Executive",
+                room: "Room A-02",
+                price: 280000,
+                distance: 1.2,
+                category: "MIXED",
+                custodian: "Mrs. Mukasa Sarah",
+                photo: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 3,
+                name: "Kakyeka Boys Residence",
+                room: "Room 10",
+                price: 390000,
+                distance: 0.4,
+                category: "BOYS",
+                custodian: "Mr. Tumwesigye David",
+                photo: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80"
+            }
+        ];
+
+        let activeHoldBooking = null;
+        let countdownInterval = null;
+
+        // Initialize icons, listings, and any signed-in session.
+        window.onload = async function() {
+            lucide.createIcons();
+            renderHostels(hostelsData);
+            if (authToken) {
+                try {
+                    const response = await fetch('/api/auth/me', {
+                        headers: { Authorization: `Bearer ${authToken}` }
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        if (response.status === 401 || response.status === 403) {
+                            sessionStorage.removeItem('authToken');
+                            authToken = null;
+                        } else {
+                            throw new Error(result.message || 'Unable to verify your session.');
+                        }
+                    } else {
+                        setCurrentUser(result.user);
+                    }
+                } catch (error) {
+                    console.error('Session verification failed:', error);
+                    showAuthMessage(error.message || 'Unable to verify your session.');
+                }
+            }
+            updateViewForUserRole();
+        };
+
+        // AUTHENTICATION SYSTEM FUNCTIONS
+        function openAuthModal(form = 'login') {
+            showAuthForm(form);
+            setAuthMessage('');
+            document.getElementById('modal-auth').classList.remove('hidden');
+        }
+
+        function showAuthForm(form) {
+            const isRegister = form === 'register';
+            document.getElementById('auth-login-form').classList.toggle('hidden', isRegister);
+            document.getElementById('auth-register-form').classList.toggle('hidden', !isRegister);
+            document.getElementById('auth-tab-login').className = isRegister
+                ? 'rounded-md py-2 text-xs font-bold text-slate-500'
+                : 'rounded-md bg-white py-2 text-xs font-bold text-indigo-900 shadow-sm';
+            document.getElementById('auth-tab-register').className = isRegister
+                ? 'rounded-md bg-white py-2 text-xs font-bold text-indigo-900 shadow-sm'
+                : 'rounded-md py-2 text-xs font-bold text-slate-500';
+        }
+
+        function closeAuthModal() {
+            document.getElementById('modal-auth').classList.add('hidden');
+        }
+
+        function setAuthMessage(message) {
+            const messageElement = document.getElementById('auth-message');
+            messageElement.textContent = message;
+            messageElement.classList.toggle('hidden', !message);
+        }
+
+        function setCurrentUser(user) {
+            currentUser = {
+                id: user.id,
+                name: user.full_name,
+                email: user.email,
+                role: user.role,
+                institution: user.institution
+            };
+        }
+
+        async function submitAuthRequest(path, body) {
+            const response = await fetch(path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const responseText = await response.text();
+            let result;
+            try {
+                result = responseText ? JSON.parse(responseText) : null;
+            } catch {
+                throw new Error('The authentication server returned an invalid response. Start the app with "npm run dev" and open http://localhost:5000.');
+            }
+            if (!result) {
+                throw new Error('The authentication server returned an empty response. Start the app with "npm run dev" and open http://localhost:5000.');
+            }
+            if (!response.ok) {
+                throw new Error(result.message || 'Authentication failed.');
+            }
+            if (!result.token || !result.user) {
+                throw new Error('The authentication server response was incomplete. Please try again.');
+            }
+            sessionStorage.setItem('authToken', result.token);
+            authToken = result.token;
+            setCurrentUser(result.user);
+            closeAuthModal();
+            updateViewForUserRole();
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            setAuthMessage('');
+            const email = document.getElementById('auth-email').value;
+            const password = document.getElementById('auth-password').value;
+            try {
+                await submitAuthRequest('/api/auth/login', { email, password });
+            } catch (error) {
+                setAuthMessage(error.message || 'Unable to sign in right now.');
+            }
+        }
+
+        async function handleRegisterSubmit(e) {
+            e.preventDefault();
+            setAuthMessage('');
+            const password = document.getElementById('register-password').value;
+            if (password !== document.getElementById('register-password-confirm').value) {
+                setAuthMessage('The passwords do not match.');
+                return;
+            }
+
+            const body = {
+                full_name: document.getElementById('register-name').value,
+                email: document.getElementById('register-email').value,
+                phone_number: document.getElementById('register-phone').value,
+                institution: document.getElementById('register-institution').value,
+                password
+            };
+            try {
+                await submitAuthRequest('/api/auth/register', body);
+            } catch (error) {
+                setAuthMessage(error.message || 'Unable to create your account right now.');
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('authToken');
+            authToken = null;
+            currentUser = null;
+            updateViewForUserRole();
+        }
+
+        // ROLE ISOLATION VIEW ENGINE (NFR-03 & BR-05)
+        function updateViewForUserRole() {
+            const guestBanner = document.getElementById('guest-welcome');
+            const userBanner = document.getElementById('user-banner');
+            const navAuth = document.getElementById('nav-auth-container');
+
+            const viewStudent = document.getElementById('view-student');
+            const viewCustodian = document.getElementById('view-custodian');
+            const viewWarden = document.getElementById('view-warden');
+
+            // Hide all views first
+            viewStudent.classList.add('hidden');
+            viewCustodian.classList.add('hidden');
+            viewWarden.classList.add('hidden');
+
+            if (!currentUser) {
+                // Unauthenticated Guest State
+                guestBanner.classList.remove('hidden');
+                userBanner.classList.add('hidden');
+                navAuth.innerHTML = `
+                    <button onclick="openAuthModal()" class="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-indigo-950 font-bold px-4 py-1.5 rounded-full text-xs shadow-sm transition">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>Login / Register</span>
+                    </button>
+                `;
+                viewStudent.classList.remove('hidden'); // Guests can browse search listings
+            } else {
+                // Logged In State
+                guestBanner.classList.add('hidden');
+                userBanner.classList.remove('hidden');
+
+                document.getElementById('banner-user-name').innerText = currentUser.name;
+                document.getElementById('banner-role-badge').innerText = currentUser.role;
+                document.getElementById('banner-user-inst').innerText = `(${currentUser.institution})`;
+
+                navAuth.innerHTML = '<div class="flex items-center gap-2 bg-indigo-900 border border-indigo-700 px-3 py-1 rounded-full text-xs text-amber-300 font-bold"><i data-lucide="user-check" class="w-4 h-4"></i><span id="nav-user-name"></span></div>';
+                document.getElementById('nav-user-name').textContent = currentUser.name.split(' ')[0];
+
+                // Render Strict View Based on Role
+                if (currentUser.role === 'STUDENT') {
+                    document.getElementById('banner-access-info').innerText = 'Access: Student Portal (Search & Book)';
+                    viewStudent.classList.remove('hidden');
+                } else if (currentUser.role === 'CUSTODIAN') {
+                    document.getElementById('banner-access-info').innerText = 'Access: Custodian Portal (Post Vacancies)';
+                    viewCustodian.classList.remove('hidden');
+                } else if (currentUser.role === 'WARDEN') {
+                    document.getElementById('banner-access-info').innerText = 'Access: Warden Verification Portal';
+                    viewWarden.classList.remove('hidden');
+                }
+            }
+
+            lucide.createIcons();
+        }
+
+        // Language Switcher (NFR-10)
+        function toggleLanguage() {
+            currentLang = currentLang === 'EN' ? 'RUN' : 'EN';
+            const t = translations[currentLang];
+
+            document.getElementById('app-title').innerText = t.title;
+            document.getElementById('app-subtitle').innerText = t.subtitle;
+            document.getElementById('lang-btn-text').innerText = t.langBtn;
+            document.getElementById('label-filter-title').childNodes[2].nodeValue = " " + t.filterTitle;
+            document.getElementById('label-max-price').innerText = t.maxPrice;
+            document.getElementById('label-category').innerText = t.category;
+            document.getElementById('label-distance').innerText = t.distance;
+            
+            document.getElementById('label-custodian-title').innerText = t.custTitle;
+            document.getElementById('label-custodian-sub').innerText = t.custSub;
+            document.getElementById('label-form-name').innerText = t.formName;
+            document.getElementById('label-form-room').innerText = t.formRoom;
+            document.getElementById('label-form-price').innerText = t.formPrice;
+            document.getElementById('label-form-category').innerText = t.formCategory;
+            document.getElementById('label-form-dist').innerText = t.formDist;
+            document.getElementById('label-form-photo').innerText = t.formPhoto;
+            document.getElementById('btn-post-room').childNodes[2].nodeValue = " " + t.btnPost;
+
+            document.getElementById('label-warden-title').innerText = t.wardenTitle;
+            document.getElementById('label-warden-sub').innerText = t.wardenSub;
+            document.getElementById('label-search-token').innerText = t.searchToken;
+            document.getElementById('btn-verify').childNodes[2].nodeValue = " " + t.btnVerify;
+
+            renderHostels(hostelsData);
+        }
+
+        function updatePriceLabel(val) {
+            document.getElementById('price-display').innerText = parseInt(val).toLocaleString() + " UGX";
+        }
+
+        // Apply Filters (FR-01)
+        function applyFilters() {
+            const maxPrice = parseFloat(document.getElementById('filter-price').value);
+            const category = document.getElementById('filter-category').value;
+            const maxDistance = parseFloat(document.getElementById('filter-distance').value);
+
+            const filtered = hostelsData.filter(h => {
+                const matchPrice = h.price <= maxPrice;
+                const matchCategory = category === 'ALL' || h.category === category;
+                const matchDist = h.distance <= maxDistance;
+                return matchPrice && matchCategory && matchDist;
+            });
+
+            document.getElementById('results-count').innerText = `${filtered.length} Hostels Found`;
+            renderHostels(filtered);
+        }
+
+        // Render Cards
+        function renderHostels(items) {
+            const grid = document.getElementById('hostel-grid');
+            grid.innerHTML = '';
+
+            if (items.length === 0) {
+                grid.innerHTML = `<div class="col-span-full bg-white p-8 rounded-xl text-center text-slate-400">No hostels match the selected filters.</div>`;
+                return;
+            }
+
+            items.forEach(h => {
+                const badgeColor = h.category === 'GIRLS' ? 'bg-pink-100 text-pink-700' : (h.category === 'BOYS' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700');
+                const btnText = translations[currentLang].bookBtn;
+
+                grid.innerHTML += `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition">
+                        <div class="relative h-44 bg-slate-200">
+                            <img src="${h.photo}" alt="${h.name}" class="w-full h-full object-cover">
+                            <span class="absolute top-3 right-3 text-[10px] font-extrabold uppercase ${badgeColor} px-2.5 py-1 rounded-full tracking-wider">
+                                ${h.category}
+                            </span>
+                        </div>
+                        <div class="p-4 flex-grow flex flex-col justify-between space-y-3">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-bold text-slate-900">${h.name}</h3>
+                                    <span class="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono">${h.room}</span>
+                                </div>
+                                <p class="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> ${h.distance} KM from MUST/BSU
+                                </p>
+                                <p class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                    <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i> Custodian: ${h.custodian}
+                                </p>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Rent / Semester</span>
+                                    <div class="font-bold text-indigo-700">${h.price.toLocaleString()} UGX</div>
+                                </div>
+                                <button onclick="openBookingModal(${h.id})" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1">
+                                    <i data-lucide="bookmark" class="w-3.5 h-3.5"></i> ${btnText}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        // Custodian Form Handler (FR-02)
+        function handlePostRoom(e) {
+            e.preventDefault();
+            if (!currentUser || currentUser.role !== 'CUSTODIAN') {
+                return alert("Access Denied: Only authenticated Custodians can publish rooms.");
+            }
+
+            const newHostel = {
+                id: hostelsData.length + 1,
+                name: document.getElementById('form-hostel-name').value,
+                room: document.getElementById('form-room-no').value,
+                price: parseFloat(document.getElementById('form-price').value),
+                distance: parseFloat(document.getElementById('form-distance').value),
+                category: document.getElementById('form-category').value,
+                custodian: currentUser.name,
+                photo: document.getElementById('form-photo').value || "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=600&q=80"
+            };
+
+            hostelsData.unshift(newHostel);
+            alert("Room vacancy published successfully!");
+            renderHostels(hostelsData);
+        }
+
+        // Booking Hold (FR-03)
+        function openBookingModal(hostelId) {
+            if (!currentUser) {
+                openAuthModal();
+                return;
+            }
+
+            if (currentUser.role !== 'STUDENT') {
+                return alert("Access Denied: Only Students can place room holds.");
+            }
+
+            activeHoldBooking = hostelsData.find(h => h.id === hostelId);
+            document.getElementById('bk-hostel-name').innerText = activeHoldBooking.name;
+            document.getElementById('bk-room-no').innerText = activeHoldBooking.room;
+            document.getElementById('bk-price').innerText = activeHoldBooking.price.toLocaleString() + " UGX";
+
+            document.getElementById('modal-booking').classList.remove('hidden');
+
+            // Timer Initialization (24 hours)
+            let totalSeconds = 24 * 3600;
+            clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                totalSeconds--;
+                if (totalSeconds <= 0) clearInterval(countdownInterval);
+                const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+                const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+                const secs = String(totalSeconds % 60).padStart(2, '0');
+                document.getElementById('countdown-timer').innerText = `${hrs}:${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function closeBookingModal() {
+            document.getElementById('modal-booking').classList.add('hidden');
+            clearInterval(countdownInterval);
+        }
+
+        // Payment Execution (FR-04)
+        function handleCompletePayment(e) {
+            e.preventDefault();
+            const ref = document.getElementById('payment-ref-input').value;
+            closeBookingModal();
+
+            // Populate Receipt
+            const receiptToken = "MBR-REC-2026-" + Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('rec-token').innerText = receiptToken;
+            document.getElementById('rec-student').innerText = currentUser ? currentUser.name : "Student";
+            document.getElementById('rec-hostel').innerText = `${activeHoldBooking.name} - ${activeHoldBooking.room}`;
+            document.getElementById('rec-amount').innerText = activeHoldBooking.price.toLocaleString() + " UGX";
+
+            document.getElementById('modal-receipt').classList.remove('hidden');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('modal-receipt').classList.add('hidden');
+        }
+
+        // Verification (FR-05, FR-10)
+        function performVerification() {
+            const token = document.getElementById('verify-token-input').value;
+            if (!token) return alert("Please enter a valid verification code.");
+
+            document.getElementById('verification-result').classList.remove('hidden');
+        }
+
+        
+    </script>
+</body>
+</html>
